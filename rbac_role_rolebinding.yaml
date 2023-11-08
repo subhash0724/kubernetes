@@ -1,0 +1,105 @@
+# Kubernetes RBAC Setup
+
+
+# Role
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+
+
+#To apply this role:
+
+kubectl apply -f role.yaml
+
+kubectl get role
+
+## Role Binding
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: User
+  name: jack
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+
+
+
+# To check the permissions of the jack user:
+
+kubectl auth can-i get pod --as jack
+
+# Cluster Role
+creating a cluster role named secret-reader. This cluster role allows the user to perform actions like get, watch, and list on secrets resources.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+
+
+
+
+# Role Binding (Namespace-level)
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-secrets
+  namespace: development
+subjects:
+- kind: User
+  name: dev
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+
+
+
+kubectl auth can-i get secret --as dev -n development
+
+# Cluster Role Binding
+This cluster role binding binds the secret-reader cluster role to the user riya globally.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-secrets-global
+subjects:
+- kind: User
+  name: riya
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+
+
+#check permissions
+kubectl auth can-i get secret --as riya -A
+
